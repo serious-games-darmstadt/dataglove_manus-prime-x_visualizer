@@ -5,11 +5,6 @@ import os
 import json
 from pathlib import Path
 
-"""
-    TODO: 
-        - dont start blender 3 times with static gestures!
-        - maybe: make json extraction in blender faster?
-"""
 
 PARENT_DIR = Path(__file__).parent.resolve()
 
