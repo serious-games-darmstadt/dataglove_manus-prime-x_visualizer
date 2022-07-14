@@ -207,7 +207,7 @@ class StaticDataVisualizer:
         # Reset attributes
         self.__reset()
 
-        # Save input file name TODO: make it method for base class and use in static and dynamic
+        # Save input file name
         norm_input_file_path = os.path.abspath(file_path)
         input_file_type = norm_input_file_path[norm_input_file_path.rfind('.') + 1:]
         if input_file_type not in self.SUPPORTED_IN_FILE_TYPES:
