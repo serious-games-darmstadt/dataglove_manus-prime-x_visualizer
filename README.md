@@ -45,8 +45,6 @@ The output will be a blender file with the respective gesture animation for the 
 Example ('j' gesture):<br />
 ![](./gesture.gif) <br />
 
-TEST
-
 **Note**<br />
 The 'z' gesture only changes in position in the time interval and does not change either joint angle values or wrist/hand rotation. Since the position information is not available, the animation stays relatively motionless.<br />
 Possibly other dynamic gestures can be visualized in the future that incorporate either varying joint angles or wrist/hand rotations or both for the best visual effect.
