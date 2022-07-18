@@ -272,9 +272,12 @@ class StaticDataVisualizer:
             self.__reset_blender_script_for_values(export_file_type, sample, idx, export_png)
 
             # Crop image
-            png_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), export_png_path))
-            img = Image.open(png_path)
-            img.crop((400, 50, 1350, 1500)).save(png_path)  # Crop and save new image
+            try:
+                png_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), export_png_path))
+                img = Image.open(png_path)
+                img.crop((400, 50, 1350, 1050)).save(png_path)  # Crop and save new image
+            except IOError:
+                print("Could not crop image!")
 
     def __reset(self) -> None:
         """
