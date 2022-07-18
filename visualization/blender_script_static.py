@@ -43,6 +43,8 @@ OBJ_PATH_STR = ''
 LABEL = ''
 HAND = ''
 sample_values = []
+EXPORT_PNG = False
+EXPORT_PNG_STR = ''
 
 
 # Input Paths
@@ -57,16 +59,17 @@ FBX_HAND_RIGHT_FILE_PATH = os.path.abspath(
 STL_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), STL_PATH_STR))
 BLEND_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), BLEND_PATH_STR))
 OBJ_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), OBJ_PATH_STR))
-
+EXPORT_PNG_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), EXPORT_PNG_STR))
 
 # Convert values to float
 sample_values = [float(e) for _, e in enumerate(sample_values)]
 
-# Clean scene
-while bpy.data.objects:
-    bpy.data.objects.remove(bpy.data.objects[0], do_unlink=True)
+# Clean scene with cube
+bpy.data.objects.remove(bpy.data.objects['Cube'], do_unlink=True)
+if not EXPORT_PNG:  # clean scene of every object that is not needed
+    bpy.data.objects.remove(bpy.data.objects['Camera'], do_unlink=True)
+    bpy.data.objects.remove(bpy.data.objects['Light'], do_unlink=True)
 
-# TODO: need to change axes for left or right hand with thumb data?
 # Import FBX for right or left hand
 fbx_path = FBX_HAND_LEFT_FILE_PATH if HAND == "Left" else FBX_HAND_RIGHT_FILE_PATH
 bpy.ops.import_scene.fbx(filepath=fbx_path, automatic_bone_orientation=True)
@@ -235,3 +238,29 @@ elif EXPORT_FILE_TYPE == "blend":
     bpy.ops.wm.save_mainfile(filepath=BLEND_FILE_PATH)  # blend file
 elif EXPORT_FILE_TYPE == "obj":
     bpy.ops.export_scene.obj(filepath=OBJ_FILE_PATH)  # obj file
+
+# Render and export PNG
+if EXPORT_PNG:  # Set camera and light positions when exporting as png
+    # Camera
+    camera_obj = bpy.data.objects['Camera']
+    bpy.context.view_layer.objects.active = camera_obj
+    bpy.ops.object.mode_set(mode='OBJECT')
+    c = bpy.data.cameras['Camera']
+    camera_distance = -0.7
+    camera_obj.location = mathutils.Vector((0.09, -0.012574, camera_distance))
+    camera_obj.rotation_euler = mathutils.Euler((radians(180.155), radians(0.448426), radians(90.0183)), 'XYZ')
+
+    # Light
+    light_obj = bpy.data.objects['Light']
+    bpy.context.view_layer.objects.active = light_obj
+    bpy.ops.object.mode_set(mode='OBJECT')
+    light_distance = -5.5
+    light_obj.location = mathutils.Vector((0.091267, -0.002574, light_distance))
+    light_obj.rotation_euler = mathutils.Euler((radians(180.155), radians(0.448426), radians(90.0183)), 'XYZ')
+
+    # Hand Model
+    obj = bpy.data.objects['Armature']
+    bpy.context.view_layer.objects.active = obj
+    bpy.context.scene.render.image_settings.file_format = 'PNG'
+    bpy.context.scene.render.filepath = EXPORT_PNG_PATH
+    bpy.ops.render.render(write_still=True)

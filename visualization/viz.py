@@ -4,7 +4,8 @@ import fileinput
 import os
 import json
 from pathlib import Path
-
+import platform
+from PIL import Image
 
 PARENT_DIR = Path(__file__).parent.resolve()
 
@@ -16,7 +17,8 @@ class DynamicDataVisualizer:
         self.label = ""
         self.hand = ""
         self.gesture_data = {}  # json data of interval for dynamic gesture
-        self.blender_path = R"/Applications/Blender.app/Contents/MacOS/Blender"  # shutil.which('blender')
+        self.blender_path = R"/Applications/Blender.app/Contents/MacOS/Blender" if \
+            platform.system() == 'Darwin' else shutil.which('blender')  # check if mac
         self.blender_script_path = os.path.join(PARENT_DIR, R"./blender_script_dynamic.py")
         self.output_dir = os.path.abspath(output_dir)
 
@@ -143,18 +145,22 @@ class StaticDataVisualizer:
         self.hand = ""
         self.data_samples = []  # List of lists (multiple samples)
         self.input_file_name = R""
-        self.blender_path =  R"/Applications/Blender.app/Contents/MacOS/Blender"  # shutil.which('blender')
+        self.blender_path = R"/Applications/Blender.app/Contents/MacOS/Blender" if \
+            platform.system() == 'Darwin' else shutil.which('blender')  # check if mac
         self.blender_script_path = blender_script_path
         self.output_dir = output_dir
+        self.output_dir_png = os.path.join(output_dir, 'png')
 
         Path(output_dir).mkdir(parents=True, exist_ok=True)
+        Path(self.output_dir_png).mkdir(parents=True, exist_ok=True)  # create folder for PNG images
 
-    def generate_static_gesture_from_file(self, file_path: str, file_type: str) -> None:
+    def generate_static_gesture_from_file(self, file_path: str, file_type: str, export_png: bool = False) -> None:
         """
         Generates three static gestures from the file with data in WACH format. The files must contain
         data for three gestures.
         :param file_path:
         :param file_type:
+        :param export_png:
         :return:
         """
         print("Generating static gesture ...")
@@ -168,7 +174,7 @@ class StaticDataVisualizer:
             print("File type for export not supported!")
 
         self.__read_from_file(file_path)
-        self.__export_as(file_type)
+        self.__export_as(file_type, export_png)
 
         print("Finished generating static gesture!")
 
@@ -176,13 +182,15 @@ class StaticDataVisualizer:
                                             label: str,
                                             hand: str,
                                             sample_values: list[str],
-                                            file_type: str) -> None:
+                                            file_type: str,
+                                            export_png: bool = False) -> None:
         """
         Generates a static gesture from the given data in WACH format as list.
         :param label:
         :param hand:
         :param sample_values:
         :param file_type:
+        :param export_png:
         :return:
         """
         print("Generating static gesture ...")
@@ -193,7 +201,7 @@ class StaticDataVisualizer:
             return
 
         self.__read_sample(label, hand, sample_values)
-        self.__export_as(file_type)
+        self.__export_as(file_type, export_png)
 
         print("Finished generating static gesture!")
 
@@ -250,17 +258,23 @@ class StaticDataVisualizer:
         self.data_samples.append(sample_values)
         self.input_file_name = label
 
-    def __export_as(self, export_file_type: str) -> None:
+    def __export_as(self, export_file_type: str, export_png: bool) -> None:
         """
         Runs the blender script and exports result as file.
         :param export_file_type: Desired output file type.
+        :param export_png: If file should also be saved as png.
         :return: None
         """
         # Run script for each sample
         for idx, sample in enumerate(self.data_samples):
-            self.__create_blender_script_with_values(export_file_type, sample, idx)
+            export_png_path = self.__create_blender_script_with_values(export_file_type, sample, idx, export_png)
             self.__run_blender_script()
-            self.__reset_blender_script_for_values(export_file_type, sample, idx)
+            self.__reset_blender_script_for_values(export_file_type, sample, idx, export_png)
+
+            # Crop image
+            png_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), export_png_path))
+            img = Image.open(png_path)
+            img.crop((400, 50, 1350, 1500)).save(png_path)  # Crop and save new image
 
     def __reset(self) -> None:
         """
@@ -275,7 +289,8 @@ class StaticDataVisualizer:
     def __create_blender_script_with_values(self,
                                             export_file_type: str,
                                             sample_values: list[str],
-                                            sample_number: int):
+                                            sample_number: int,
+                                            export_png: bool) -> str:
 
         # Replace label variable in blender_script_static.py
         for line in fileinput.input(self.blender_script_path, inplace=True):
@@ -294,6 +309,16 @@ class StaticDataVisualizer:
             print(line.replace(
                 "EXPORT_FILE_TYPE = ''", f"EXPORT_FILE_TYPE = '{export_file_type}'").rstrip())
 
+        # Replace export_png variable in blender_script_static.py
+        for line in fileinput.input(self.blender_script_path, inplace=True):
+            print(line.replace("EXPORT_PNG = False", f"EXPORT_PNG = {str(export_png)}").rstrip())
+
+        # Replace export_png_path variable in blender_script_static.py
+        export_png_path = os.path.join(self.output_dir_png, f"{self.input_file_name}_{self.hand}"
+                                                            f"_{sample_number}_PNG.png")
+        for line in fileinput.input(self.blender_script_path, inplace=True):
+            print(line.replace("EXPORT_PNG_STR = ''", f"EXPORT_PNG_STR = R'{export_png_path}'").rstrip())
+
         # Replace output path
         for output_file_type in self.SUPPORTED_OUT_FILE_TYPES:
             out_str = f"{output_file_type.upper()}_PATH_STR"
@@ -304,10 +329,13 @@ class StaticDataVisualizer:
             for line in fileinput.input(self.blender_script_path, inplace=True):
                 print(line.replace(old_output_path, new_output_path).rstrip())
 
+        return export_png_path
+
     def __reset_blender_script_for_values(self,
                                           export_file_type: str,
                                           sample_values: list[str],
-                                          sample_number: int) -> None:
+                                          sample_number: int,
+                                          export_png: bool) -> None:
 
         # Reset each change done in __create_blender_script_with_values()
         for line in fileinput.input(self.blender_script_path, inplace=True):
@@ -319,6 +347,12 @@ class StaticDataVisualizer:
         for line in fileinput.input(self.blender_script_path, inplace=True):
             print(line.replace(
                 f"EXPORT_FILE_TYPE = '{export_file_type}'", "EXPORT_FILE_TYPE = ''").rstrip())
+        for line in fileinput.input(self.blender_script_path, inplace=True):
+            print(line.replace(f"EXPORT_PNG = {str(export_png)}", "EXPORT_PNG = False").rstrip())
+        for line in fileinput.input(self.blender_script_path, inplace=True):
+            new_value = os.path.join(self.output_dir_png,
+                                     f"{self.input_file_name}_{self.hand}_{sample_number}_PNG.png")
+            print(line.replace(f"EXPORT_PNG_STR = R'{new_value}'", "EXPORT_PNG_STR = ''").rstrip())
 
         for output_file_type in self.SUPPORTED_OUT_FILE_TYPES:
             out_str = f"{output_file_type.upper()}_PATH_STR"

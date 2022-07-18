@@ -36,12 +36,12 @@ def static_gesture_visualization_example() -> None:
     #     '1.0',  # pinky stretch pip
     #     '1.0'   # pinky stretch dip
     # ]
-    # static_viz.generate_static_gesture_from_sample('faust', 'Left', sample_values, 'stl')
+    # static_viz.generate_static_gesture_from_sample('faust', 'Left', sample_values, 'stl', export_png=True)
 
     # Generate multiple samples from file (file_path, export_file_type)
     static_viz = viz.StaticDataVisualizer()
     # static_viz = viz.StaticDataVisualizer(R"./src")
-    static_viz.generate_static_gesture_from_file(R"./example_static.txt", 'stl')
+    static_viz.generate_static_gesture_from_file(R"./example_static.txt", 'stl', export_png=True)
 
 
 def dynamic_gesture_visualization_example() -> None:
@@ -65,7 +65,7 @@ def dynamic_gesture_visualization_example() -> None:
 
 def main():
     static_gesture_visualization_example()
-    dynamic_gesture_visualization_example()
+    #dynamic_gesture_visualization_example()
 
 
 if __name__ == '__main__':
