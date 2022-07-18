@@ -5,6 +5,7 @@ Handshapes can be generated using the module "viz.py" in the visualization folde
 ## Requirements
 
 Blender installed and in path. Check "blender --version" in command prompt.
+When images should be exported as PNG, the Pillow library is also needed. (pip install Pillow)
 
 ## Static Gestures
 
