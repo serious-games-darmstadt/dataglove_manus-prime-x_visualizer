@@ -261,6 +261,7 @@ if EXPORT_PNG:  # Set camera and light positions when exporting as png
     # Hand Model
     obj = bpy.data.objects['Armature']
     bpy.context.view_layer.objects.active = obj
+    bpy.context.scene.render.film_transparent = True  # make render image transparent
     bpy.context.scene.render.image_settings.file_format = 'PNG'
     bpy.context.scene.render.filepath = EXPORT_PNG_PATH
     bpy.ops.render.render(write_still=True)
