@@ -4,20 +4,22 @@ Handshapes can be generated using the module "viz.py" in the visualization folde
 
 ## Requirements
 
-Blender installed and in path. Check "blender --version" in command prompt.
+Blender installed and in path. Check "blender --version" in command prompt.<br />
+When images should be exported as PNG, the Pillow library is also needed. (pip install Pillow)
 
 ## Static Gestures
 
-example.py shows how to visualize static gestures (see function static_gesture_visualization_example()). Either static files with three gestures each can be used as input or directly joint angle values as a list for a single gesture:
+example.py shows how to visualize static gestures (see function static_gesture_visualization_example()). With the "export_png" flag the output will also be saved as an image.<br />
+Either static files with three gestures each can be used as input or directly joint angle values as a list for a single gesture:
 
 ```python
 static_viz = StaticDataVisualizer()
 
 # Generate a single sample (label, hand, values, export_file_type)
-static_viz.generate_static_gesture_from_sample('faust', 'Left', sample_values, 'stl')
+static_viz.generate_static_gesture_from_sample('faust', 'Left', sample_values, 'stl', export_png=True)
 
 # Generate multiple samples from file (file_path, export_file_type)
-static_viz.generate_static_gesture_from_file(file_path, 'stl')
+static_viz.generate_static_gesture_from_file(file_path, 'stl', export_png=True)
 ```
 
 At the moment static handshapes can be exported as .stl, .blend or .obj files. The last two can be easily visualized using Blender.
